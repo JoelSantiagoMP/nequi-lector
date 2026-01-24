@@ -42,8 +42,18 @@ async def recibir_notificacion(request: Request):
 @app.get("/")
 def home():
     return {"mensaje": "API de Nequi funcionando en la nube"}
-
+@app.get("/datos")
+async def obtener_datos_nube():
+    ingresos, gastos = db.obtener_resumen_mensual()
+    movimientos = db.obtener_ultimos_movimientos()
+    return {
+        "ingresos": ingresos,
+        "gastos": gastos,
+        "movimientos": movimientos
+    }
+    
 if __name__ == "__main__":
     # Render nos dirá en qué puerto correr (PORT), si no, usamos 8000
     port = int(os.environ.get("PORT", 8000))
+
     uvicorn.run(app, host="0.0.0.0", port=port)
