@@ -1,3 +1,5 @@
+flet
 flask
 pymongo
 dnspython
+requests
