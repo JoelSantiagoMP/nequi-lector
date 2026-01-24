@@ -3,15 +3,13 @@ import requests
 import threading
 import time
 
-# REEMPLAZA ESTA URL CON LA QUE TE DA RENDER
-URL_API = "https://nequi-lector.onrender.com/datos" 
+# URL CORREGIDA: Apunta a la ruta de movimientos que confirmamos en el navegador
+URL_API = "https://nequi-lector.onrender.com/movimientos" 
 
 def main(page: ft.Page):
     page.title = "Nequi Tracker Pro"
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 20
-    page.window_width = 450
-    page.window_height = 800
     
     lista_movimientos = ft.Column(spacing=10, scroll=ft.ScrollMode.ALWAYS, expand=True)
     txt_ingresos = ft.Text("$0", size=24, weight="bold", color="green400")
@@ -20,15 +18,20 @@ def main(page: ft.Page):
     def actualizar_lista():
         try:
             # Consultamos los datos a la nube
-            response = requests.get(URL_API, timeout=5)
+            response = requests.get(URL_API, timeout=10)
             if response.status_code == 200:
-                data = response.json()
+                # El servidor manda una lista de listas [[tipo, monto, fecha, desc], ...]
+                movimientos = response.json() 
                 
-                txt_ingresos.value = f"+ ${data['ingresos']:,.0f}"
-                txt_gastos.value = f"- ${data['gastos']:,.0f}"
+                # Calculamos totales manualmente ya que el servidor solo manda la lista
+                total_ing = sum(item[1] for item in movimientos if item[0] == "Ingreso")
+                total_gas = sum(item[1] for item in movimientos if item[0] == "Gasto")
+                
+                txt_ingresos.value = f"+ ${total_ing:,.0f}"
+                txt_gastos.value = f"- ${total_gas:,.0f}"
 
                 lista_movimientos.controls.clear()
-                for item in data['movimientos']:
+                for item in movimientos:
                     es_ing = item[0] == "Ingreso"
                     color = "green400" if es_ing else "red400"
                     simbolo = "+" if es_ing else "-"
@@ -52,7 +55,7 @@ def main(page: ft.Page):
                     )
                 page.update()
         except Exception as e:
-            print(f"Buscando datos en la nube... ({e})")
+            print(f"Error actualizando datos: {e}")
 
     page.add(
         ft.Column([
@@ -72,15 +75,12 @@ def main(page: ft.Page):
     def run_timer():
         while True:
             actualizar_lista()
-            time.sleep(5)
+            time.sleep(10) # 10 segundos para no saturar el servidor gratuito
 
     thread = threading.Thread(target=run_timer, daemon=True)
     thread.start()
+    # Ejecución inicial
     actualizar_lista()
 
-# ... todo tu código anterior igual ...
-
 if __name__ == "__main__":
-    # Usamos ft.app directamente sin el parámetro target si da problemas
     ft.app(target=main)
-
