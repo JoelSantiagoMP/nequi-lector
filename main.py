@@ -4,7 +4,7 @@ import threading
 import time
 
 # REEMPLAZA ESTA URL CON LA QUE TE DA RENDER
-URL_API = "https://nequi-lector.onrender.com" 
+URL_API = "https://nequi-lector.onrender.com/datos" 
 
 def main(page: ft.Page):
     page.title = "Nequi Tracker Pro"
@@ -79,4 +79,5 @@ def main(page: ft.Page):
     actualizar_lista()
 
 if __name__ == "__main__":
+
     ft.app(target=main)
