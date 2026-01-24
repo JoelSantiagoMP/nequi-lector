@@ -78,6 +78,9 @@ def main(page: ft.Page):
     thread.start()
     actualizar_lista()
 
-if __name__ == "__main__":
+# ... todo tu código anterior igual ...
 
+if __name__ == "__main__":
+    # Usamos ft.app directamente sin el parámetro target si da problemas
     ft.app(target=main)
+
