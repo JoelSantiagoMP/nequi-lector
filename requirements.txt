@@ -1,6 +1,3 @@
-flet
-requests
-fastapi
-uvicorn
+flask
 pymongo
 dnspython
