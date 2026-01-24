@@ -45,15 +45,14 @@ async def obtener_datos_nube():
     try:
         ingresos, gastos = db.obtener_resumen_mensual()
         movimientos = db.obtener_ultimos_movimientos()
-        
-        # Forzamos que los valores sean números reales
         return {
             "ingresos": float(ingresos or 0),
             "gastos": float(gastos or 0),
             "movimientos": movimientos or []
         }
     except Exception as e:
-        return {"error": str(e), "ingresos": 0, "gastos": 0, "movimientos": []}
+        return {"ingresos": 0, "gastos": 0, "movimientos": []}
+
 
 @app.get("/")
 def home():
@@ -62,4 +61,5 @@ def home():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
