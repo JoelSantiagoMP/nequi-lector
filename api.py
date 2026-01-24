@@ -21,6 +21,7 @@ async def recibir_notificacion(request: Request):
     es_ingreso = any(p in texto_min for p in ["recibiste", "enviaron", "pusieron", "transfirio"])
     tipo = "Ingreso" if es_ingreso else "Egreso"
 
+    
     # 3. Extraer concepto (Quién envía o dónde se gasta)
     concepto = "Movimiento Nequi"
     if " de " in texto_min:
@@ -61,5 +62,6 @@ def home():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
 
