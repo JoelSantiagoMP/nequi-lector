@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from database import DBManager
 import re
-import os # Necesario para leer el puerto del servidor
+import os
 import uvicorn
 
 app = FastAPI()
@@ -21,7 +21,7 @@ async def recibir_notificacion(request: Request):
     es_ingreso = any(p in texto_min for p in ["recibiste", "enviaron", "pusieron", "transfirio"])
     tipo = "Ingreso" if es_ingreso else "Egreso"
 
-    # 3. Extraer el concepto
+    # 3. Extraer concepto (Quién envía o dónde se gasta)
     concepto = "Movimiento Nequi"
     if " de " in texto_min:
         concepto = texto.split(" de ")[-1]
@@ -30,18 +30,16 @@ async def recibir_notificacion(request: Request):
     elif " en " in texto_min:
         concepto = texto.split(" en ")[-1]
     
-    concepto = concepto[:30].strip() # Limpiamos espacios extra
+    concepto = concepto[:30].strip()
 
     if monto > 0:
         db.registrar_movimiento(tipo, monto, concepto) 
-        print(f"✅ {tipo}: ${monto} - {concepto}")
+        print(f"✅ Guardado: {tipo} ${monto} - {concepto}")
         return {"status": "success"}
     
     return {"status": "ignored"}
 
-@app.get("/")
-def home():
-    return {"mensaje": "API de Nequi funcionando en la nube"}
+# ESTA ES LA FUNCIÓN PARA QUE TU PC Y TABLET VEAN LOS DATOS
 @app.get("/datos")
 async def obtener_datos_nube():
     ingresos, gastos = db.obtener_resumen_mensual()
@@ -51,9 +49,11 @@ async def obtener_datos_nube():
         "gastos": gastos,
         "movimientos": movimientos
     }
-    
-if __name__ == "__main__":
-    # Render nos dirá en qué puerto correr (PORT), si no, usamos 8000
-    port = int(os.environ.get("PORT", 8000))
 
+@app.get("/")
+def home():
+    return {"mensaje": "Servidor Nequi Cloud Activo"}
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
