@@ -1,50 +1,60 @@
-from fastapi import FastAPI, Request
+from flask import Flask, request, jsonify
 from database import DBManager
 import re
-import os
-import uvicorn
 
-app = FastAPI()
+app = Flask(__name__)
 db = DBManager()
 
-@app.post("/nequi-webhook")
-async def recibir_notificacion(request: Request):
-    data = await request.json()
-    texto = data.get("texto_notificacion", "")
+def extraer_monto(texto):
+    # Busca números con puntos de miles como 10.000 o 1.000.000
+    patron = r'\$\s?([0-9]{1,3}(?:\.[0-9]{3})*)'
+    resultado = re.search(patron, texto)
+    if resultado:
+        valor_str = resultado.group(1).replace('.', '')
+        return float(valor_str)
+    return 0.0
+
+def identificar_movimiento(texto):
+    # Convertimos todo a minúsculas para que sea más fácil comparar
+    t = texto.lower()
     
-    match_monto = re.search(r"\$\s?([\d\.]+)", texto)
-    monto = float(match_monto.group(1).replace(".", "")) if match_monto else 0.0
+    # Palabras clave para entradas de dinero
+    ingreso_keywords = ["te envió", "recibiste", "hizo un envío", "envió", "recibido", "transferencia"]
+    # Palabras clave para salidas de dinero
+    egreso_keywords = ["enviaste", "pagaste", "sacaste", "retiro", "pago", "compra"]
+
+    if any(key in t for key in ingreso_keywords):
+        return "Ingreso"
+    elif any(key in t for key in egreso_keywords):
+        return "Egreso"
+    return "Otro"
+
+@app.route('/nequi-webhook', methods=['POST'])
+def webhook():
+    data = request.json
+    if not data or 'texto_notificacion' not in data:
+        return jsonify({"status": "error", "message": "No data"}), 400
+
+    mensaje = data['texto_notificacion']
+    tipo = identificar_movimiento(mensaje)
+    monto = extraer_monto(mensaje)
     
-    texto_min = texto.lower()
-    es_ingreso = any(p in texto_min for p in ["recibiste", "enviaron", "pusieron", "transfirio"])
-    tipo = "Ingreso" if es_ingreso else "Egreso"
-
-    concepto = "Movimiento Nequi"
-    if " de " in texto_min: concepto = texto.split(" de ")[-1]
-    elif " a " in texto_min: concepto = texto.split(" a ")[-1]
-    elif " en " in texto_min: concepto = texto.split(" en ")[-1]
+    # Solo guardamos si identificamos que es un movimiento real
+    if tipo != "Otro" and monto > 0:
+        db.registrar_movimiento(tipo, monto, mensaje)
+        return jsonify({"status": "success", "tipo": tipo, "monto": monto}), 200
     
-    concepto = concepto[:30].strip()
+    return jsonify({"status": "ignored", "reason": "No es un movimiento financiero claro"}), 200
 
-    if monto > 0:
-        db.registrar_movimiento(tipo, monto, concepto) 
-        return {"status": "success"}
-    return {"status": "ignored"}
+@app.route('/movimientos', methods=['GET'])
+def obtener_movimientos():
+    movs = db.obtener_ultimos_movimientos()
+    return jsonify(movs)
 
-@app.get("/datos")
-async def obtener_datos_nube():
-    try:
-        ingresos, egresos = db.obtener_resumen_mensual()
-        movimientos = db.obtener_ultimos_movimientos()
-        return {
-            "ingresos": float(ingresos),
-            "gastos": float(egresos),
-            "movimientos": movimientos
-        }
-    except Exception as e:
-        print(f"Error en API: {e}")
-        return {"ingresos": 0, "gastos": 0, "movimientos": []}
+@app.route('/resumen', methods=['GET'])
+def obtener_resumen():
+    ingresos, egresos = db.obtener_resumen_mensual()
+    return jsonify({"ingresos": ingresos, "egresos": egresos})
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
