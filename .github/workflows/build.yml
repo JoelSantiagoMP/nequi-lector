@@ -7,10 +7,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # Actualizado a v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5 # Actualizado a v5
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -23,16 +23,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install flet requests
 
+      - name: Verify Files
+        run: |
+          ls -R  # Esto nos mostrará en el log si el archivo main.py realmente está ahí
+
       - name: Accept Android Licenses
         run: |
           yes | sdkmanager --licenses || true
 
       - name: Build APK
         run: |
+          # Forzamos la creación del APK ignorando advertencias menores
           flet build apk --main main.py
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4 # AQUÍ ESTABA EL ERROR, cambiado a v4
+        if: success()
+        uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: build/apk/*.apk
