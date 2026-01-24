@@ -23,18 +23,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install flet requests
 
-      - name: Verify Files
-        run: |
-          ls -R  # Esto nos mostrará en el log si el archivo main.py realmente está ahí
-
       - name: Accept Android Licenses
         run: |
           yes | sdkmanager --licenses || true
 
       - name: Build APK
         run: |
-          # Forzamos la creación del APK ignorando advertencias menores
-          flet build apk --main main.py
+          # EL CAMBIO: En las nuevas versiones de Flet ya no se usa --main
+          # Se asume que el archivo está en la raíz o se pone el nombre directo.
+          flet build apk main.py
 
       - name: Upload Artifact
         if: success()
