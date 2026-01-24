@@ -6,21 +6,23 @@ app = Flask(__name__)
 db = DBManager()
 
 def extraer_monto(texto):
-    # Busca números con puntos de miles como 10.000 o 1.000.000
-    patron = r'\$\s?([0-9]{1,3}(?:\.[0-9]{3})*)'
-    resultado = re.search(patron, texto)
-    if resultado:
-        valor_str = resultado.group(1).replace('.', '')
-        return float(valor_str)
+    # Esta versión busca números como 10.000, 50.000 o 10000 
+    # aunque NO tengan el signo $
+    patron = r'(\d{1,3}(?:\.\d{3})*)'
+    resultados = re.findall(patron, texto)
+    
+    for res in resultados:
+        # Quitamos los puntos para validar el número
+        valor_limpio = res.replace('.', '')
+        # Si el número es grande (como un monto de Nequi), lo tomamos
+        if valor_limpio.isdigit() and int(valor_limpio) >= 1000:
+            return float(valor_limpio)
     return 0.0
 
 def identificar_movimiento(texto):
-    # Convertimos todo a minúsculas para que sea más fácil comparar
     t = texto.lower()
-    
-    # Palabras clave para entradas de dinero
-    ingreso_keywords = ["te envió", "recibiste", "hizo un envío", "envió", "recibido", "transferencia"]
-    # Palabras clave para salidas de dinero
+    # Lista ultra-reforzada con y sin tildes
+    ingreso_keywords = ["te envió", "te envio", "recibiste", "recibio", "envió", "envio", "transferencia"]
     egreso_keywords = ["enviaste", "pagaste", "sacaste", "retiro", "pago", "compra"]
 
     if any(key in t for key in ingreso_keywords):
@@ -33,18 +35,18 @@ def identificar_movimiento(texto):
 def webhook():
     data = request.json
     if not data or 'texto_notificacion' not in data:
-        return jsonify({"status": "error", "message": "No data"}), 400
+        return jsonify({"status": "error"}), 400
 
     mensaje = data['texto_notificacion']
     tipo = identificar_movimiento(mensaje)
     monto = extraer_monto(mensaje)
     
-    # Solo guardamos si identificamos que es un movimiento real
+    # Guardamos si identificamos el tipo y encontramos un número coherente
     if tipo != "Otro" and monto > 0:
         db.registrar_movimiento(tipo, monto, mensaje)
         return jsonify({"status": "success", "tipo": tipo, "monto": monto}), 200
     
-    return jsonify({"status": "ignored", "reason": "No es un movimiento financiero claro"}), 200
+    return jsonify({"status": "ignored", "reason": "No se detectó monto o tipo"}), 200
 
 @app.route('/movimientos', methods=['GET'])
 def obtener_movimientos():
