@@ -2,3 +2,5 @@ flet
 requests
 fastapi
 uvicorn
+pymongo
+dnspython
