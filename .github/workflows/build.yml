@@ -29,15 +29,13 @@ jobs:
 
       - name: Build APK
         run: |
-          # Creamos una carpeta temporal para que Flet no se confunda con los archivos del servidor
-          mkdir dist
-          cp main.py dist/
-          # Compilamos especificando que el código de la APP está en esa carpeta
-          flet build apk dist/main.py --output app-release.apk
+          # Usamos el comando base. Flet buscará main.py en la raíz por defecto.
+          # Agregamos verbose (-v) para que si falla, nos diga EXACTAMENTE qué buscó.
+          flet build apk -v
 
       - name: Upload Artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: "*.apk"
+          path: build/apk/*.apk
