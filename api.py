@@ -6,22 +6,24 @@ app = Flask(__name__)
 db = DBManager()
 
 def extraer_monto(texto):
-    import re
-    # Buscamos cualquier secuencia de números
-    numeros = re.findall(r'\d+', texto)
+    # Buscamos secuencias de números (ej: 1.000 o 1000)
+    numeros = re.findall(r'\d+(?:\.\d+)?', texto.replace(',', ''))
     for n in numeros:
-        monto = float(n)
-        # Nequi a veces manda el 1000 al final del mensaje o pegado a una coma
-        if 1000 <= monto <= 10000000:
-            return monto
+        try:
+            monto = float(n)
+            # Filtro para evitar números pequeños que no son montos (como fechas o códigos)
+            if 1000 <= monto <= 10000000:
+                return monto
+        except:
+            continue
     return 0.0
 
 def identificar_movimiento(texto):
     t = texto.lower()
-    # Usamos palabras clave sin tildes para que nada falle
-    if "enviaste" in t or "pagaste" in t or "compra" in t:
+    # Palabras clave sin tildes para evitar errores de codificación
+    if any(palabra in t for palabra in ["enviaste", "pagaste", "compra", "retiro"]):
         return "Gasto"
-    if "envi" in t or "recibi" in t or "transferencia" in t:
+    if any(palabra in t for palabra in ["envi", "recibi", "transferencia", "abono"]):
         return "Ingreso"
     return "Otro"
 
@@ -29,24 +31,19 @@ def identificar_movimiento(texto):
 def webhook():
     data = request.json
     if not data or 'texto_notificacion' not in data:
-        return jsonify({"status": "error"}), 400
+        return jsonify({"status": "error", "message": "No data received"}), 400
 
     mensaje = data['texto_notificacion']
-    
-    # FORZAMOS EL GUARDADO: Sin filtros de monto ni de tipo
-    # Queremos ver qué llega exactamente a la base de datos
     tipo = identificar_movimiento(mensaje)
     monto = extraer_monto(mensaje)
     
-    # Guardamos SIEMPRE para ver qué está fallando
-    db.registrar_movimiento(tipo, monto, mensaje)
+    # SOLO GUARDAR SI ES DINERO REAL
+    if tipo != "Otro" and monto > 0:
+        db.registrar_movimiento(tipo, monto, mensaje)
+        return jsonify({"status": "success", "saved": True}), 200
     
-    return jsonify({
-        "status": "success", 
-        "recibido": mensaje, 
-        "monto_detectado": monto, 
-        "tipo_detectado": tipo
-    }), 200
+    # Si es publicidad o un mensaje sin monto, no lo guardamos pero respondemos OK
+    return jsonify({"status": "ignored", "reason": "No financial data detected"}), 200
 
 @app.route('/movimientos', methods=['GET'])
 def obtener_movimientos():
@@ -54,5 +51,3 @@ def obtener_movimientos():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
-
-
