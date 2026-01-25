@@ -11,8 +11,8 @@ def main(page: ft.Page):
     page.padding = 20
     
     lista_movimientos = ft.Column(spacing=10, scroll=ft.ScrollMode.ALWAYS, expand=True)
-    txt_ingresos = ft.Text("$0", size=24, weight="bold", color="green400")
-    txt_gastos = ft.Text("$0", size=24, weight="bold", color="red400")
+    txt_ingresos = ft.Text("Hoy: $0 | Mes: $0", size=16, weight="bold", color="green400")
+    txt_gastos = ft.Text("Hoy: $0 | Mes: $0", size=16, weight="bold", color="red400")
 
     def actualizar_lista():
         try:
@@ -20,12 +20,20 @@ def main(page: ft.Page):
             if response.status_code == 200:
                 movimientos = response.json() 
                 
-                # Sumamos usando los nombres exactos del servidor
-                total_ing = sum(item[1] for item in movimientos if item[0] == "Ingreso")
-                total_gas = sum(item[1] for item in movimientos if item[0] == "Gasto")
+                # Fechas para filtrar
+                fecha_hoy = time.strftime("%Y-%m-%d")
+                mes_actual = time.strftime("%Y-%m")
+
+                # Totales HOY
+                ing_hoy = sum(item[1] for item in movimientos if item[0] == "Ingreso" and item[2].startswith(fecha_hoy))
+                gas_hoy = sum(item[1] for item in movimientos if item[0] == "Gasto" and item[2].startswith(fecha_hoy))
+
+                # Totales MES
+                ing_mes = sum(item[1] for item in movimientos if item[0] == "Ingreso" and item[2].startswith(mes_actual))
+                gas_mes = sum(item[1] for item in movimientos if item[0] == "Gasto" and item[2].startswith(mes_actual))
                 
-                txt_ingresos.value = f"+ ${total_ing:,.0f}"
-                txt_gastos.value = f"- ${total_gas:,.0f}"
+                txt_ingresos.value = f"Hoy: ${ing_hoy:,.0f} | Mes: ${ing_mes:,.0f}"
+                txt_gastos.value = f"Hoy: ${gas_hoy:,.0f} | Mes: ${gas_mes:,.0f}"
 
                 lista_movimientos.controls.clear()
                 for item in movimientos:
@@ -59,12 +67,12 @@ def main(page: ft.Page):
             ft.Text("Mi Nequi Tracker", size=28, weight="bold", color="purple200"),
             ft.Container(
                 content=ft.Row([
-                    ft.Column([ft.Text("Ingresos", size=11, color="grey400"), txt_ingresos], expand=True),
-                    ft.Column([ft.Text("Gastos", size=11, color="grey400"), txt_gastos], expand=True),
+                    ft.Column([ft.Text("INGRESOS", size=10, color="grey400"), txt_ingresos], expand=True),
+                    ft.Column([ft.Text("GASTOS", size=10, color="grey400"), txt_gastos], expand=True),
                 ]),
                 bgcolor="#1e1e26", padding=20, border_radius=20
             ),
-            ft.Text("Movimientos Recientes", size=16, weight="w500"),
+            ft.Text("Historial (Últimos 100)", size=16, weight="w500"),
             lista_movimientos
         ], expand=True)
     )
