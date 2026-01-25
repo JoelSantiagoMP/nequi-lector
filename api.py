@@ -6,13 +6,16 @@ app = Flask(__name__)
 db = DBManager()
 
 def extraer_monto(texto):
-    # Buscamos secuencias de números (ej: 1.000 o 1000)
-    numeros = re.findall(r'\d+(?:\.\d+)?', texto.replace(',', ''))
+    # 1. Quitamos los puntos de miles (ej: 1.000 -> 1000)
+    texto_limpio = texto.replace('.', '')
+    # 2. Buscamos los números
+    numeros = re.findall(r'\d+', texto_limpio)
+    
     for n in numeros:
         try:
             monto = float(n)
-            # Filtro para evitar números pequeños que no son montos (como fechas o códigos)
-            if 1000 <= monto <= 10000000:
+            # Bajamos el filtro a 100 para que 1000 pase sin problemas
+            if 100 <= monto <= 10000000:
                 return monto
         except:
             continue
@@ -33,11 +36,21 @@ def webhook():
         data = request.get_json(force=True)
         mensaje = data.get('texto_notificacion', 'VACIO')
         
-        # GUARDADO FORZADO: No preguntamos nada, solo guardamos para probar
-        db.registrar_movimiento("PRUEBA_NOTIF", 0, mensaje)
+        # Procesamos de verdad el mensaje
+        monto = extraer_monto(mensaje)
+        tipo = identificar_movimiento(mensaje)
         
-        return jsonify({"status": "success", "recibido": mensaje}), 200
+        # Ahora sí guardamos con los datos reales
+        if monto > 0:
+            db.registrar_movimiento(tipo, monto, mensaje)
+            return jsonify({"status": "success", "monto": monto}), 200
+        else:
+            # Si el monto es 0, guardamos como error para saber qué falló
+            db.registrar_movimiento("ERROR_MONTO", 0, mensaje)
+            return jsonify({"status": "ignored", "reason": "monto 0"}), 200
+
     except Exception as e:
+        print(f"Error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/movimientos', methods=['GET'])
@@ -46,4 +59,5 @@ def obtener_movimientos():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
+
 
