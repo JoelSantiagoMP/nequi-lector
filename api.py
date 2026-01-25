@@ -32,14 +32,21 @@ def webhook():
         return jsonify({"status": "error"}), 400
 
     mensaje = data['texto_notificacion']
+    
+    # FORZAMOS EL GUARDADO: Sin filtros de monto ni de tipo
+    # Queremos ver qué llega exactamente a la base de datos
     tipo = identificar_movimiento(mensaje)
     monto = extraer_monto(mensaje)
     
-    if tipo != "Otro" and monto > 0:
-        db.registrar_movimiento(tipo, monto, mensaje)
-        return jsonify({"status": "success", "tipo": tipo, "monto": monto}), 200
+    # Guardamos SIEMPRE para ver qué está fallando
+    db.registrar_movimiento(tipo, monto, mensaje)
     
-    return jsonify({"status": "ignored", "reason": "No detectado"}), 200
+    return jsonify({
+        "status": "success", 
+        "recibido": mensaje, 
+        "monto_detectado": monto, 
+        "tipo_detectado": tipo
+    }), 200
 
 @app.route('/movimientos', methods=['GET'])
 def obtener_movimientos():
@@ -47,4 +54,5 @@ def obtener_movimientos():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
+
 
