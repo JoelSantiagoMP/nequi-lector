@@ -3,7 +3,6 @@ import requests
 import threading
 import time
 
-# URL CORREGIDA: Apunta a la ruta de movimientos que confirmamos en el navegador
 URL_API = "https://nequi-lector.onrender.com/movimientos" 
 
 def main(page: ft.Page):
@@ -17,13 +16,11 @@ def main(page: ft.Page):
 
     def actualizar_lista():
         try:
-            # Consultamos los datos a la nube
             response = requests.get(URL_API, timeout=10)
             if response.status_code == 200:
-                # El servidor manda una lista de listas [[tipo, monto, fecha, desc], ...]
                 movimientos = response.json() 
                 
-                # Calculamos totales manualmente ya que el servidor solo manda la lista
+                # Sumamos usando los nombres exactos del servidor
                 total_ing = sum(item[1] for item in movimientos if item[0] == "Ingreso")
                 total_gas = sum(item[1] for item in movimientos if item[0] == "Gasto")
                 
@@ -44,7 +41,7 @@ def main(page: ft.Page):
                                     bgcolor=color, padding=10, border_radius=25,
                                 ),
                                 ft.Column([
-                                    ft.Text(str(item[3]).title(), weight="bold", size=16),
+                                    ft.Text(str(item[3]).title(), weight="bold", size=14, overflow=ft.TextOverflow.ELLIPSIS),
                                     ft.Text(item[2], size=11, color="grey500"),
                                 ], expand=True),
                                 ft.Text(f"{simbolo}${item[1]:,.0f}", 
@@ -55,7 +52,7 @@ def main(page: ft.Page):
                     )
                 page.update()
         except Exception as e:
-            print(f"Error actualizando datos: {e}")
+            print(f"Error: {e}")
 
     page.add(
         ft.Column([
@@ -75,11 +72,10 @@ def main(page: ft.Page):
     def run_timer():
         while True:
             actualizar_lista()
-            time.sleep(10) # 10 segundos para no saturar el servidor gratuito
+            time.sleep(10)
 
     thread = threading.Thread(target=run_timer, daemon=True)
     thread.start()
-    # Ejecución inicial
     actualizar_lista()
 
 if __name__ == "__main__":
