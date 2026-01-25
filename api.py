@@ -6,20 +6,20 @@ app = Flask(__name__)
 db = DBManager()
 
 def extraer_monto(texto):
-    # Busca números que puedan tener puntos o comas
-    resultados = re.findall(r'[\d\.,]+', texto)
-    for res in resultados:
-        limpio = res.replace('.', '').replace(',', '').strip()
-        if limpio.isdigit():
-            monto = float(limpio)
-            if 1000 <= monto <= 10000000:
-                return monto
+    import re
+    # Buscamos cualquier secuencia de números
+    numeros = re.findall(r'\d+', texto)
+    for n in numeros:
+        monto = float(n)
+        # Nequi a veces manda el 1000 al final del mensaje o pegado a una coma
+        if 1000 <= monto <= 10000000:
+            return monto
     return 0.0
 
 def identificar_movimiento(texto):
     t = texto.lower()
-    # Palabras clave simplificadas para evitar errores de tildes
-    if "enviaste" in t or "pagaste" in t or "retiro" in t or "compra" in t:
+    # Usamos palabras clave sin tildes para que nada falle
+    if "enviaste" in t or "pagaste" in t or "compra" in t:
         return "Gasto"
     if "envi" in t or "recibi" in t or "transferencia" in t:
         return "Ingreso"
@@ -47,3 +47,4 @@ def obtener_movimientos():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
+
