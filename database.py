@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 class DBManager:
     def __init__(self):
         # Tu URL real de MongoDB Atlas
-        self.uri = "mongodb+srv://yessirrr1105_db_user:NLwtXyEDfALAiluo@cluster0.bykatji.mongodb.net/nequi_database?retryWrites=true&w=majority"
+        self.uri = "mongodb+srv://yessirrr1105_db_user:NLwtXyEDfALAiluo@cluster0.bykatji.mongodb.net/nequi_database?retryWrites=true&w=majority&appName=Cluster0"
         self.client = MongoClient(self.uri)
         self.db = self.client['nequi_database']
         self.collection = self.db['movimientos']
@@ -37,5 +37,6 @@ class DBManager:
             else:
                 egresos += doc['monto']
         return ingresos, egresos
+
 
 
