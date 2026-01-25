@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class DBManager:
     def __init__(self):
@@ -10,9 +10,12 @@ class DBManager:
         self.collection = self.db['movimientos']
 
     def registrar_movimiento(self, tipo, monto, detalle):
-        fecha_hoy = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Restamos 5 horas a la hora del servidor para que sea hora colombiana
+        fecha_colombia = datetime.now() - timedelta(hours=5)
+        fecha_str = fecha_colombia.strftime("%Y-%m-%d %I:%M %p") # Formato 12h (AM/PM)
+        
         nuevo_doc = {
-            "fecha": fecha_hoy,
+            "fecha": fecha_str,
             "tipo": tipo,
             "monto": monto,
             "detalle": detalle
@@ -34,3 +37,4 @@ class DBManager:
             else:
                 egresos += doc['monto']
         return ingresos, egresos
+
