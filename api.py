@@ -6,17 +6,19 @@ app = Flask(__name__)
 db = DBManager()
 
 def extraer_monto(texto):
-    # Esta versión busca números como 10.000, 50.000 o 10000 
-    # aunque NO tengan el signo $
-    patron = r'(\d{1,3}(?:\.\d{3})*)'
+    # Detecta números con punto (20.000) o sin punto (20000)
+    patron = r'\d[\d\.]+' 
     resultados = re.findall(patron, texto)
     
     for res in resultados:
-        # Quitamos los puntos para validar el número
-        valor_limpio = res.replace('.', '')
-        # Si el número es grande (como un monto de Nequi), lo tomamos
-        if valor_limpio.isdigit() and int(valor_limpio) >= 1000:
-            return float(valor_limpio)
+        # Limpieza total: quitamos puntos y espacios
+        valor_limpio = res.replace('.', '').strip()
+        
+        if valor_limpio.isdigit():
+            monto = float(valor_limpio)
+            # Rango final acordado: de $1.000 hasta $10.000.000
+            if 1000 <= monto <= 10000000: 
+                return monto
     return 0.0
 
 def identificar_movimiento(texto):
@@ -60,3 +62,4 @@ def obtener_resumen():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
+
