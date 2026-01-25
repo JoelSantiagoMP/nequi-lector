@@ -29,21 +29,16 @@ def identificar_movimiento(texto):
 
 @app.route('/nequi-webhook', methods=['POST'])
 def webhook():
-    data = request.json
-    if not data or 'texto_notificacion' not in data:
-        return jsonify({"status": "error", "message": "No data received"}), 400
-
-    mensaje = data['texto_notificacion']
-    tipo = identificar_movimiento(mensaje)
-    monto = extraer_monto(mensaje)
-    
-    # SOLO GUARDAR SI ES DINERO REAL
-    if tipo != "Otro" and monto > 0:
-        db.registrar_movimiento(tipo, monto, mensaje)
-        return jsonify({"status": "success", "saved": True}), 200
-    
-    # Si es publicidad o un mensaje sin monto, no lo guardamos pero respondemos OK
-    return jsonify({"status": "ignored", "reason": "No financial data detected"}), 200
+    try:
+        data = request.get_json(force=True)
+        mensaje = data.get('texto_notificacion', 'VACIO')
+        
+        # GUARDADO FORZADO: No preguntamos nada, solo guardamos para probar
+        db.registrar_movimiento("PRUEBA_NOTIF", 0, mensaje)
+        
+        return jsonify({"status": "success", "recibido": mensaje}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/movimientos', methods=['GET'])
 def obtener_movimientos():
@@ -51,3 +46,4 @@ def obtener_movimientos():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
+
