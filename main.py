@@ -103,7 +103,7 @@ def main(page: ft.Page):
                 bgcolor=PRIMARY_PURPLE, 
                 padding=20, 
                 border_radius=12,
-                alignment=ft.alignment.center_left
+                alignment=ft.Alignment.CENTER_LEFT
             ),
             ft.Text("Historial (Últimos 100)", size=16, weight="bold", color=PRIMARY_PURPLE),
             lista_movimientos
