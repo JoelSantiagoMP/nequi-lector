@@ -26,7 +26,7 @@ def main(page: ft.Page):
         detalle = item[3]
 
         detail_container = ft.Container(
-            content=ft.Text(detalle, size=14, color=ft.colors.GREY_800),
+            content=ft.Text(detalle, size=14, color="grey800"),
             visible=False,
             margin=ft.margin.only(top=10)
         )
@@ -44,7 +44,7 @@ def main(page: ft.Page):
                     ),
                     ft.Column([
                         ft.Text("Ingreso Recibido", weight="bold", size=16, color=PRIMARY_PURPLE),
-                        ft.Text(fecha, size=12, color=ft.colors.GREY_600),
+                        ft.Text(fecha, size=12, color="grey600"),
                     ], expand=True, spacing=2),
                     ft.Text(f"+${monto:,.0f}", size=18, weight="bold", color=PRIMARY_PURPLE)
                 ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
