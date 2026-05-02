@@ -28,6 +28,6 @@ class DBManager:
         self.collection.delete_many({"fecha_raw": {"$lt": limite_tiempo}})
 
     def obtener_ultimos_movimientos(self, limite=100):
-        # Ahora enviamos hasta 100 registros para que la App tenga historial
+        # Aseguramos enviar hasta 100 registros ordenados descendentemente
         docs = self.collection.find().sort("_id", -1).limit(limite)
-        return [[d['tipo'], d['monto'], d['fecha'], d['detalle']] for d in docs]
+        return [[d.get('tipo', 'Ingreso'), d.get('monto', 0), d.get('fecha', ''), d.get('detalle', '')] for d in docs]
