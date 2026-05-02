@@ -112,10 +112,10 @@ def main(page: ft.Page):
 
     def run_timer():
         while True:
-            time.sleep(10)
             actualizar_lista()
+            time.sleep(10)
 
-    actualizar_lista()
+    # Iniciamos el hilo sin bloquear el hilo principal (evita pantalla blanca al iniciar en celular)
     thread = threading.Thread(target=run_timer, daemon=True)
     thread.start()
 
