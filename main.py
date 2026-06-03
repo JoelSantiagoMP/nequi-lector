@@ -10,13 +10,14 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = "#F5F5F5"
     page.padding = 20
+    page.scroll = ft.ScrollMode.AUTO
 
     # Nequi Colors
     PRIMARY_PURPLE = "#700EBE"
     NEON_PINK = "#FF0082"
     WHITE = "#FFFFFF"
     
-    lista_movimientos = ft.ListView(spacing=12, expand=True)
+    lista_movimientos = ft.ListView(spacing=12)
     txt_ingresos = ft.Text("Cargando...", size=18, weight="bold", color=WHITE)
     status_text = ft.Text("Conectando al servidor...", size=12, color="grey600", italic=True)
 
@@ -29,7 +30,7 @@ def main(page: ft.Page):
         detail_container = ft.Container(
             content=ft.Text(detalle, size=14, color="grey800"),
             visible=False,
-            margin=ft.margin.only(top=10)
+            margin=ft.Margin.only(top=10)
         )
 
         def toggle_expand(e):
@@ -39,14 +40,16 @@ def main(page: ft.Page):
         return ft.Container(
             content=ft.Column([
                 ft.Row([
-                    ft.Container(
-                        content=ft.Icon("arrow_downward", color=NEON_PINK, size=20),
-                        bgcolor="#FCE4EC", padding=10, border_radius=25,
-                    ),
-                    ft.Column([
-                        ft.Text("Ingreso Recibido", weight="bold", size=16, color=PRIMARY_PURPLE),
-                        ft.Text(fecha, size=12, color="grey600"),
-                    ], expand=True, spacing=2),
+                    ft.Row([
+                        ft.Container(
+                            content=ft.Icon("arrow_downward", color=NEON_PINK, size=20),
+                            bgcolor="#FCE4EC", padding=10, border_radius=25,
+                        ),
+                        ft.Column([
+                            ft.Text("Ingreso Recibido", weight="bold", size=16, color=PRIMARY_PURPLE),
+                            ft.Text(fecha, size=12, color="grey600"),
+                        ], spacing=2),
+                    ], spacing=12),
                     ft.Text(f"+${monto:,.0f}", size=18, weight="bold", color=PRIMARY_PURPLE)
                 ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                 detail_container
@@ -54,9 +57,9 @@ def main(page: ft.Page):
             padding=15, 
             border_radius=12, 
             bgcolor=WHITE,
-            border=ft.border.all(1, "#E0E0E0"),
+            border=ft.Border.all(1, "#E0E0E0"),
             on_click=toggle_expand,
-            animate=ft.animation.Animation(300, ft.AnimationCurve.EASE_OUT)
+            animate=ft.Animation(300, ft.AnimationCurve.EASE_OUT)
         )
 
     def actualizar_lista():
@@ -100,9 +103,11 @@ def main(page: ft.Page):
                 
                 txt_ingresos.value = f"Hoy: ${ing_hoy:,.0f} | Mes: ${ing_mes:,.0f}"
                 lista_movimientos.controls = nuevos_controles
+                print(f"DEBUG: numero de controles en lista_movimientos: {len(lista_movimientos.controls)}")
                 status_text.value = "Conectado al servidor"
                 status_text.color = "green"
                 status_text.visible = False # Ocultar si todo está correcto
+                lista_movimientos.update()
                 page.update()
             else:
                 raise Exception(f"Servidor respondió con código {response.status_code}")
@@ -112,6 +117,7 @@ def main(page: ft.Page):
             status_text.value = f"Error: {e}\n(Verifica que el servidor esté activo y el celular tenga internet)"
             status_text.color = "red"
             status_text.visible = True
+            lista_movimientos.update()
             page.update()
 
     # UI Assembly
@@ -131,7 +137,7 @@ def main(page: ft.Page):
             ft.Text("Historial (Últimos 100)", size=16, weight="bold", color=PRIMARY_PURPLE),
             status_text,
             lista_movimientos
-        ], expand=True)
+        ])
     )
 
     def run_timer():
