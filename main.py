@@ -40,7 +40,7 @@ def main(page: ft.Page):
             content=ft.Column([
                 ft.Row([
                     ft.Container(
-                        content=ft.Icon(ft.icons.ARROW_DOWNWARD, color=NEON_PINK, size=20),
+                        content=ft.Icon("arrow_downward", color=NEON_PINK, size=20),
                         bgcolor="#FCE4EC", padding=10, border_radius=25,
                     ),
                     ft.Column([
