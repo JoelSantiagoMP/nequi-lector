@@ -17,7 +17,8 @@ def main(page: ft.Page):
     WHITE = "#FFFFFF"
     
     lista_movimientos = ft.ListView(spacing=12, expand=True)
-    txt_ingresos = ft.Text("Hoy: $0 | Mes: $0", size=18, weight="bold", color=WHITE)
+    txt_ingresos = ft.Text("Cargando...", size=18, weight="bold", color=WHITE)
+    status_text = ft.Text("Conectando al servidor...", size=12, color="grey600", italic=True)
 
     def create_card(item):
         # item: [tipo, monto, fecha, detalle]
@@ -60,7 +61,13 @@ def main(page: ft.Page):
 
     def actualizar_lista():
         try:
-            response = requests.get(URL_API, timeout=10)
+            # Si no hay controles cargados, indicar al usuario que está conectando
+            if not lista_movimientos.controls:
+                status_text.value = "Conectando con Render (puede tardar hasta 2 minutos si el servidor está en cold start)..."
+                status_text.color = "grey600"
+                page.update()
+
+            response = requests.get(URL_API, timeout=120) # Aumentado a 120s
             if response.status_code == 200:
                 movimientos = response.json() 
                 
@@ -73,9 +80,14 @@ def main(page: ft.Page):
                 
                 nuevos_controles = []
                 for item in movimientos:
+                    # Garantizar que el monto sea float
+                    try:
+                        monto_item = float(item[1])
+                    except (ValueError, TypeError):
+                        monto_item = 0.0
+
                     # Sumar a totales
                     fecha_item = item[2]
-                    monto_item = item[1]
                     if isinstance(fecha_item, str):
                         if fecha_item.startswith(fecha_hoy):
                             ing_hoy += monto_item
@@ -83,13 +95,24 @@ def main(page: ft.Page):
                             ing_mes += monto_item
                     
                     # Añadir a la lista
-                    nuevos_controles.append(create_card(item))
+                    item_procesado = [item[0], monto_item, item[2], item[3]]
+                    nuevos_controles.append(create_card(item_procesado))
                 
                 txt_ingresos.value = f"Hoy: ${ing_hoy:,.0f} | Mes: ${ing_mes:,.0f}"
                 lista_movimientos.controls = nuevos_controles
+                status_text.value = "Conectado al servidor"
+                status_text.color = "green"
+                status_text.visible = False # Ocultar si todo está correcto
                 page.update()
+            else:
+                raise Exception(f"Servidor respondió con código {response.status_code}")
         except Exception as e:
             print(f"Error actualizando lista: {e}")
+            txt_ingresos.value = "Error de conexión"
+            status_text.value = f"Error: {e}\n(Verifica que el servidor esté activo y el celular tenga internet)"
+            status_text.color = "red"
+            status_text.visible = True
+            page.update()
 
     # UI Assembly
     page.add(
@@ -106,6 +129,7 @@ def main(page: ft.Page):
                 alignment=ft.Alignment.CENTER_LEFT
             ),
             ft.Text("Historial (Últimos 100)", size=16, weight="bold", color=PRIMARY_PURPLE),
+            status_text,
             lista_movimientos
         ], expand=True)
     )

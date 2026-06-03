@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from database import DBManager
 import re
 import sys
 
 app = Flask(__name__)
+CORS(app)
 db = DBManager()
 
 def extraer_monto(texto):
