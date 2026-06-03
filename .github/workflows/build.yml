@@ -1,4 +1,5 @@
 name: Build APK
+
 on:
   push:
     branches: [ main ]
@@ -7,14 +8,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
@@ -23,15 +26,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install flet requests
 
-      - name: Accept Android Licenses
-        run: |
-          yes | sdkmanager --licenses || true
-
       - name: Build APK
         run: |
-          # Usamos el comando base. Flet buscará main.py en la raíz por defecto.
-          # Agregamos verbose (-v) para que si falla, nos diga EXACTAMENTE qué buscó.
+          # Flet requiere el entorno configurado correctamente para compilar
           flet build apk -v
+        env:
+          # Necesario para que el SDK de Android sea accesible durante el build
+          ANDROID_HOME: /usr/local/lib/android/sdk
 
       - name: Upload Artifact
         if: success()
