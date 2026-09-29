@@ -1,0 +1,19 @@
+# El servicio https://nequi-lector.onrender.com ya existe.
+# No apliques este blueprint sobre la cuenta si ese servicio sigue
+# creado a mano: Render crearía otro. En el servicio actual define
+# MONGO_URI y, si quieres, WEBHOOK_TOKEN, y redespliega este código.
+services:
+  - type: web
+    name: nequi-lector
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn api:app --bind 0.0.0.0:$PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: MONGO_URI
+        sync: false
+      - key: WEBHOOK_TOKEN
+        sync: false

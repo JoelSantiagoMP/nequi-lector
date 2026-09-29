@@ -1,0 +1,21 @@
+[project]
+name = "nequi-lector"
+version = "1.0.0"
+description = "Ingresos de Nequi y Nu"
+requires-python = ">=3.10"
+dependencies = [
+  "flet==1.0.1",
+  "requests==2.34.2",
+]
+
+[tool.flet]
+org = "co.lector"
+product = "Movimientos"
+company = "Lector"
+bundle_id = "co.lector.movimientos"
+
+[tool.flet.app]
+path = "main.py"
+
+[tool.flet.android]
+split_per_abi = true
