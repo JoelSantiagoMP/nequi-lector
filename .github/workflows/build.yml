@@ -41,7 +41,7 @@ jobs:
         run: python -m unittest test_parser.py
 
       - name: Build APK
-        run: flet build apk -v --yes .
+        run: flet build apk -v --yes
 
       - name: Upload Artifact
         if: success()
