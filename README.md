@@ -49,8 +49,13 @@ El repositorio incluye un workflow de GitHub Actions que construye automáticame
 
 1. Ve a la pestaña "Actions" del repositorio en GitHub
 2. Selecciona el workflow "Build APK" más reciente
-3. Descarga el artefacto `app-release` que contiene el APK
-4. Instala el APK en tu dispositivo Android
+3. Descarga el artefacto `app-release` (contiene 3 APKs para diferentes arquitecturas)
+4. Instala el APK apropiado en tu dispositivo Android:
+   - `nequi-lector-arm64-v8a.apk` - Para dispositivos modernos (recomendado)
+   - `nequi-lector-armeabi-v7a.apk` - Para dispositivos ARM de 32 bits
+   - `nequi-lector-x86_64.apk` - Para emuladores Android x86
+
+**Nota:** Los APKs son generados con `split_per_abi` habilitado para optimizar el tamaño del archivo.
 
 ### Construcción Manual
 
